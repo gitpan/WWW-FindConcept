@@ -1,4 +1,4 @@
-# $Id: FindConcept.pm,v 1.6 2004/01/06 06:57:09 cvspub Exp $
+# $Id: FindConcept.pm,v 1.7 2004/01/06 07:40:30 cvspub Exp $
 package WWW::FindConcept;
 
 use strict;
@@ -9,10 +9,10 @@ use Data::Dumper;
 use Exporter;
 
 our @ISA = qw(Exporter);
-our @EXPORT = qw(find_concept update_concept delete_concept remove_cache);
+our @EXPORT = qw(find_concept update_concept delete_concept dump_cache remove_cache);
 our @EXPORT_FAIL = qw(extract get_concept);
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 our $cachepath = $ENV{HOME}."/.find-concept";
 
@@ -75,6 +75,14 @@ sub find_concept($) {
     keys %concept;
 }
 
+sub dump_cache(){
+    tie my %cache, 'DB_File', $cachepath, O_CREAT | O_RDWR, 0644, $DB_BTREE
+	or die "cannot open $cachepath";
+    my @c = keys %cache;
+    untie %cache;
+    return @c;
+}
+
 sub update_concept($) {
     delete_concept($_[0]);
     find_concept($_[0]);
@@ -104,6 +112,8 @@ WWW::FindConcept - Finding terms of related concepts
 
   @concepts = update_concept('Perl');
 
+  dump_cache();
+
   remove_cache();
 
 =head1 DESCRIPTION
@@ -118,6 +128,8 @@ I<find_concept()> is auto-exported and it returns a list of the related terms. T
 I<delete_concept()> deletes a concept in cache.
 
 I<update_concept()> sends out query and updates the cache each time.
+
+I<dump_cache()> outputs the queries in cache.
 
 I<remove_cache()> unlinks the cache file.  
 

@@ -9,3 +9,6 @@ Revision history for Perl extension WWW::FindConcept.
 	- find-concept.pl -r : remove cache
 	- find-concept.pl -u : update concepts
 	- Sources.pm updated
+
+0.03  Tue,  6 Jan 2004 15:35:37 +0800
+	- dump_cache() added

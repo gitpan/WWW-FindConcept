@@ -1,4 +1,4 @@
-# $Id: test.pl,v 1.4 2004/01/06 06:57:09 cvspub Exp $
+# $Id: test.pl,v 1.5 2004/01/06 07:40:30 cvspub Exp $
 use Test::More qw(no_plan);
 ok(1);
 
@@ -26,6 +26,8 @@ ok(!defined $cache{$query});
 untie %cache;
 
 ok(update_concept($query));
+ok((dump_cache())[0] eq $query);
+
 delete_concept($query);
 tie %cache, 'DB_File', $cachepath, O_RDONLY, 0644, $DB_BTREE or die;
 ok(!defined $cache{$query});
