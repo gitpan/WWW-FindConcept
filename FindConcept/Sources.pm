@@ -1,4 +1,4 @@
-# $Id: Sources.pm,v 1.5 2004/01/05 17:09:43 cvspub Exp $
+# $Id: Sources.pm,v 1.6 2004/01/06 06:57:09 cvspub Exp $
 package WWW::FindConcept::Sources;
 
 use strict;
@@ -24,14 +24,6 @@ our %source;
     );
 
 
-@{$source{vivisimo}} = 
-    (
-     'http://search6.vivisimo.com/search?query={%query%}&v:sources=MSN%2CNetscape%2CLycos%2CLooksmart%2COverture&x=0&y=0&img_base_url=http%3A%2F%2Fvivisimo.com%2Fvivisimo%2Fimages%2F&v:file=viv_5bd43732e3972c898af5adaecba3d999&v:frame=tree&v:state=(root)%7Croot'
-     ,
-     qr!target="list" onClick="oc\(this,\d+,\d+,'.+?'\)">(.+?)<\/a>!
-
-    );
-
 @{$source{lycos}} = 
     (
      'http://search.lycos.com/default.asp?lpv=1&loc=searchhp&query={%query%}'
@@ -55,6 +47,24 @@ our %source;
      ,
      qr!<td><a href="http:\/\/tm.wc.ask.com/r.+?".+?class="rollover">(.+?)</a>!
     );
+
+@{$source{scirus}} = 
+    (
+     'http://www.scirus.com/srsapp/search?q={%query%}&ds=jnl&ds=web&g=s&t=all'
+     ,
+     qr'<font class="smallfont">(.+?)<\/font><\/a>'
+
+    );
+
+@{$source{genieknows}} = 
+    (
+     'http://feed.genieknows.com/search/search_html.jsp?q={%query%}&client_id=ASE_6605&Submit=Search+Again'
+     ,
+     qr'client_id=ASE_6605">(.+?)<\/a><\/font>'
+
+    );
+
+
 
 
 

@@ -1,4 +1,4 @@
-# $Id: FindConcept.pm,v 1.5 2004/01/05 16:59:20 cvspub Exp $
+# $Id: FindConcept.pm,v 1.6 2004/01/06 06:57:09 cvspub Exp $
 package WWW::FindConcept;
 
 use strict;
@@ -9,9 +9,12 @@ use Data::Dumper;
 use Exporter;
 
 our @ISA = qw(Exporter);
-our @EXPORT = qw(find_concept);
+our @EXPORT = qw(find_concept update_concept delete_concept remove_cache);
+our @EXPORT_FAIL = qw(extract get_concept);
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
+
+our $cachepath = $ENV{HOME}."/.find-concept";
 
 sub extract {
     my ($pattern, $text, $concept) = @_;
@@ -36,19 +39,49 @@ sub get_concept {
     $a->get( $url );
     if($a->success){
 	extract($template, $a->content, $concept);
+#	print $template.$/;
+#	print Dumper $concept;
     }
 }
 
-sub find_concept {
+use DB_File;
+use Storable qw(freeze thaw);
+
+sub delete_concept($) {
+    tie my %cache, 'DB_File', $cachepath, O_CREAT | O_RDWR, 0644, $DB_BTREE
+	or die "cannot open $cachepath";
+    delete $cache{$_[0]};
+    untie %cache;
+}
+
+sub find_concept($) {
     my $query = shift;
     my %concept;
+    tie my %cache, 'DB_File', $cachepath, O_CREAT | O_RDWR, 0644, $DB_BTREE
+	or die "cannot open $cachepath";
 
-    foreach my $src ( keys %WWW::FindConcept::Sources::source ){
-#	next if $WWW::FindConcept::Sources::source{$src}->[-1] eq 'to_skip';
-	get_concept($WWW::FindConcept::Sources::source{$src}, $query, \%concept);
+    if($cache{$query}){
+	%concept = %{ thaw($cache{$query}) };
     }
+    else{
+	foreach my $src ( keys %WWW::FindConcept::Sources::source ){
+#	    next if $WWW::FindConcept::Sources::source{$src}->[-1] eq 'to_skip';
+	    get_concept($WWW::FindConcept::Sources::source{$src}, $query, \%concept);
+	}
+	$cache{$query} = freeze \%concept;
+    }
+    untie %cache;
 
     keys %concept;
+}
+
+sub update_concept($) {
+    delete_concept($_[0]);
+    find_concept($_[0]);
+}
+
+sub remove_cache {
+    unlink $cachepath;
 }
 
 1;
@@ -63,13 +96,36 @@ WWW::FindConcept - Finding terms of related concepts
 
   use WWW::FindConcept;
 
-  find_concept('Perl');
+  $WWW::FindConcept::cachepath = '~/.find-concept'; # The default value
+
+  @concepts = find_concept('Perl');
+
+  delete_concept('Perl');
+
+  @concepts = update_concept('Perl');
+
+  remove_cache();
 
 =head1 DESCRIPTION
 
-This module is aimed at retrieving terms of related concepts from various search engines. Function I<find_concept> is auto-exported and it returns a list of the related terms. The module can be used to expand the vocabulary when doing searching on web or other conceivable things.
+This module is aimed at retrieving terms of related concepts frequently being fed into search engines. You can use it to expand the vocabulary when doing search on web or other conceivable things.
 
-A command-line script L<bin/find-concept.pl> is also distributed with the module.
+
+=head2 EXPORT
+
+I<find_concept()> is auto-exported and it returns a list of the related terms. The list is also saved in cache $WWW::FindConcept::cachepath.
+
+I<delete_concept()> deletes a concept in cache.
+
+I<update_concept()> sends out query and updates the cache each time.
+
+I<remove_cache()> unlinks the cache file.  
+
+
+
+=head1 SEE ALSO
+
+L<find-concept.pl>
 
 =head1 COPYRIGHT
 
